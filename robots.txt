@@ -1,46 +1,53 @@
-# robots.txt file for https://yourdomain.com
-
-# Allow all crawlers full access to the site
 User-agent: *
-Disallow: /cgi-bin/
-Disallow: /private/
+Allow: /
 
-# Allow specific pages (if needed) - example:
-# Allow the sitemap to be crawled
-Allow: /sitemap.xml
+# Prioritize important pages
+Allow: /#review
+Allow: /blog.html
 
-# Block common bot crawlers (for example, Googlebot's images and crawlers)
-User-agent: Googlebot-Image
-Disallow: /
+# Sitemap
+Sitemap: https://brightlane.github.io/Junglescout.com/sitemap.xml
 
-User-agent: Googlebot-News
-Disallow: /
+# Crawl optimization
+Crawl-delay: 2
 
-# Block specific pages or folders
-Disallow: /checkout/
-Disallow: /login/
-Disallow: /cart/
+# AI Crawlers
+User-agent: GPTBot
+Allow: /
 
-# Prevent indexing of duplicate content, like search results or paginated URLs
-Disallow: /search?
-Disallow: /page/
+User-agent: ChatGPT-User
+Allow: /
 
-# Allow access to certain specific resources (like images, CSS, or JS)
-Allow: /images/
-Allow: /assets/
-Allow: /styles/
-Allow: /scripts/
+User-agent: ClaudeBot
+Allow: /
 
-# Sitemap location
-Sitemap: https://yourdomain.com/sitemap.xml
+User-agent: Claude-Web
+Allow: /
 
-# Prevent crawling of user profiles (replace with your specific URLs)
-Disallow: /profile/
+User-agent: PerplexityBot
+Allow: /
 
-# Specific for affiliate marketing:
-# Here we are blocking the search engines from indexing affiliate login and payment pages to ensure the focus is on content
-Disallow: /affiliate-login/
-Disallow: /affiliate-dashboard/
+User-agent: Google-Extended
+Allow: /
 
-# Example to block a folder or file related to a specific subdomain
-Disallow: /subdomain/folder/
+User-agent: CCBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+# Block low-value system files
+Disallow: /.git/
+Disallow: /.github/
+Disallow: /node_modules/
+Disallow: /package-lock.json
+Disallow: /package.json
+
+# Preferred canonical host
+Host: brightlane.github.io
