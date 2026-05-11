@@ -1,77 +1,194 @@
 import fs from 'fs';
 import path from 'path';
 
-// Function to perform cross-linking on the article content
+/* =========================
+   AFFILIATE CONFIG (LOCKED)
+========================= */
+
+const AFFILIATE_ID = "wloofjbvk5mp";
+const AFFILIATE_LINK = `https://get.junglescout.com/${AFFILIATE_ID}`;
+
+/* =========================
+   CROSS LINK SYSTEM
+========================= */
+
 function injectCrossLinks(content, language) {
-  // Define a list of pages to link to, this should be updated with your actual URLs
+
+  const siteBase =
+    `https://yourdomain.com/${language}`;
+
   const crossLinks = [
-    { keyword: 'Amazon FBA', url: `https://yourdomain.com/${language}/best-amazon-fba-products-2026.html` },
-    { keyword: 'JungleScout', url: `https://get.junglescout.com/wloofjbvk5mp` },
-    { keyword: 'FBA product research', url: `https://yourdomain.com/${language}/fba-product-research-guide.html` },
-    // Add more links as needed
+    {
+      keyword: 'Amazon FBA',
+      url: `${siteBase}/best-amazon-fba-products-2026.html`
+    },
+
+    {
+      keyword: 'JungleScout',
+      url: AFFILIATE_LINK // ALWAYS affiliate protected
+    },
+
+    {
+      keyword: 'FBA product research',
+      url: `${siteBase}/fba-product-research-guide.html`
+    }
   ];
 
-  // Iterate over the cross-links and replace matching keywords in content with anchor tags
   crossLinks.forEach(link => {
-    const regex = new RegExp(`\\b${link.keyword}\\b`, 'gi');
-    content = content.replace(regex, `<a href="${link.url}" target="_blank">${link.keyword}</a>`);
+
+    // Avoid breaking existing HTML links
+    const regex = new RegExp(
+      `(?<!href=["'])\\b${link.keyword}\\b`,
+      'gi'
+    );
+
+    content = content.replace(regex, (match) => {
+
+      // Prevent double linking
+      if (match.includes("<a")) return match;
+
+      return `<a href="${link.url}" target="_blank" rel="noopener">
+                ${match}
+              </a>`;
+    });
   });
 
   return content;
 }
 
-// Function to inject meta tags into the head of the HTML
-function injectMetaTags(html, title) {
-  const metaTags = `
-    <meta name="description" content="${title} - JungleScout Affiliate">
-    <meta name="keywords" content="${title}, JungleScout, Amazon FBA, Affiliate Marketing">
-    <meta property="og:title" content="${title}">
-    <meta property="og:description" content="${title} - JungleScout Affiliate">
-    <meta property="og:url" content="https://yourdomain.com/${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.html">
-    <meta property="og:type" content="article">
-    <meta name="robots" content="index, follow">
-  `;
-  
-  // Inject meta tags into the head section of the HTML
-  const headIndex = html.indexOf('<head>');
-  const closingHeadIndex = html.indexOf('</head>');
+/* =========================
+   META TAG ENGINE (FIXED)
+========================= */
 
-  // Insert meta tags just after the <head> tag
-  if (headIndex !== -1 && closingHeadIndex !== -1) {
-    html = html.slice(0, closingHeadIndex) + metaTags + html.slice(closingHeadIndex);
+function injectMetaTags(html, title) {
+
+  const slug =
+    title.toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-");
+
+  const metaTags = `
+<meta name="description"
+      content="${title} - Amazon FBA & JungleScout Guide">
+
+<meta name="keywords"
+      content="${title}, Amazon FBA, JungleScout, ecommerce">
+
+<meta property="og:title"
+      content="${title}">
+
+<meta property="og:description"
+      content="${title} - Learn Amazon FBA with JungleScout">
+
+<meta property="og:url"
+      content="https://yourdomain.com/${slug}.html">
+
+<meta property="og:type"
+      content="article">
+
+<meta name="robots"
+      content="index, follow">
+`;
+
+  // Prevent duplicate injection
+  if (html.includes('og:title')) {
+    return html;
   }
 
-  return html;
+  return html.replace(
+    '</head>',
+    `${metaTags}\n</head>`
+  );
 }
 
-// Function to update article with cross-links and meta tags
-function updateArticleWithCrossLinksAndMetaTags(filePath, language) {
-  let html = fs.readFileSync(filePath, 'utf8');
-  
-  // Extract title from the HTML content (this assumes title is wrapped in <title> tag)
-  const titleMatch = html.match(/<title>(.*?)<\/title>/);
-  const title = titleMatch ? titleMatch[1] : 'No title found';
+/* =========================
+   AFFILIATE SAFETY CHECK
+========================= */
 
-  // Inject cross-links and meta tags
-  const updatedContent = injectCrossLinks(html, language);
-  const updatedHtml = injectMetaTags(updatedContent, title);
+function enforceAffiliate(content) {
 
-  // Save the updated HTML file
-  fs.writeFileSync(filePath, updatedHtml);
-  console.log(`Updated cross-links and meta tags in ${filePath}`);
+  // Replace any non-affiliate JungleScout links
+  content = content.replace(
+    /https:\/\/(www\.)?junglescout\.com/gi,
+    AFFILIATE_LINK
+  );
+
+  // Ensure it always exists
+  if (!content.includes(AFFILIATE_LINK)) {
+    content += `
+
+<hr>
+
+<h2>🚀 Recommended Tool</h2>
+
+<p>
+JungleScout helps Amazon sellers find profitable products,
+analyze competition, and scale faster.
+</p>
+
+<a href="${AFFILIATE_LINK}" target="_blank" rel="sponsored noopener">
+👉 Try JungleScout
+</a>
+`;
+  }
+
+  return content;
 }
 
-// Update all generated HTML files with cross-links and meta tags
+/* =========================
+   ARTICLE UPDATER
+========================= */
+
+function updateArticle(filePath, language) {
+
+  let html =
+    fs.readFileSync(filePath, 'utf8');
+
+  const titleMatch =
+    html.match(/<title>(.*?)<\/title>/);
+
+  const title =
+    titleMatch ? titleMatch[1] : 'Untitled';
+
+  // Apply updates in correct order
+  html = injectCrossLinks(html, language);
+  html = injectMetaTags(html, title);
+  html = enforceAffiliate(html);
+
+  fs.writeFileSync(filePath, html);
+
+  console.log(
+    `✅ Updated SEO + links + affiliate: ${filePath}`
+  );
+}
+
+/* =========================
+   PROCESS ALL FILES
+========================= */
+
 function updateAllArticles() {
-  const languages = ['en', 'es', 'fr', 'de', 'it']; // Adjust to your languages
+
+  const languages =
+    ['en', 'es', 'fr', 'de', 'it'];
+
   languages.forEach(language => {
-    const dirPath = path.join(__dirname, 'posts', language);
+
+    const dirPath =
+      path.join(__dirname, 'posts', language);
+
+    if (!fs.existsSync(dirPath)) return;
+
     fs.readdirSync(dirPath).forEach(file => {
-      const filePath = path.join(dirPath, file);
-      updateArticleWithCrossLinksAndMetaTags(filePath, language);
+
+      const filePath =
+        path.join(dirPath, file);
+
+      updateArticle(filePath, language);
     });
   });
 }
 
-// Run the cross-link and meta tag injection
+/* =========================
+   RUN
+========================= */
+
 updateAllArticles();
