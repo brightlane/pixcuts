@@ -38,7 +38,7 @@ h1 { font-size: 32px; }
 .cta {
   display: inline-block;
   margin-top: 20px;
-  padding: 10px 15px;
+  padding: 12px 18px;
   background: #0a66ff;
   color: white;
   text-decoration: none;
@@ -56,16 +56,27 @@ h1 { font-size: 32px; }
 This FAQ covers everything about Amazon FBA, product research, tools, and strategies.
 </p>
 
-<a class="cta" href="https://get.junglescout.com/wloofjbvk5mp" target="_blank" rel="nofollow sponsored">
-Try Jungle Scout →
+<a class="cta"
+   href="https://get.junglescout.com/wloofjbvk5mp"
+   target="_blank"
+   rel="sponsored noopener">
+Try JungleScout →
 </a>
 
 <div id="faq"></div>
 
 <script>
-// ============================
-// 1000 FAQ GENERATOR SYSTEM
-// ============================
+
+/* =========================
+   AFFILIATE LOCK
+========================= */
+
+const AFFILIATE_LINK =
+  "https://get.junglescout.com/wloofjbvk5mp";
+
+/* =========================
+   CATEGORIES
+========================= */
 
 const categories = [
   "Amazon FBA basics",
@@ -80,50 +91,95 @@ const categories = [
   "Common mistakes"
 ];
 
-const faqContainer = document.getElementById("faq");
+const faqContainer =
+  document.getElementById("faq");
 
-let faqCount = 0;
+/* =========================
+   AFFILIATE ANSWER ENGINE
+========================= */
 
-// Generate 1000 FAQs dynamically
+function generateAnswer(cat) {
+
+  return `
+    <p>
+      This question relates to <strong>${cat}</strong>.
+      Understanding this is essential for building a profitable Amazon FBA business.
+    </p>
+
+    <p>
+      Most successful sellers rely on data-driven tools instead of guessing.
+      Product research, keyword tracking, and competition analysis are key.
+    </p>
+
+    <p>
+      Recommended tool for ${cat}:
+      <a href="${AFFILIATE_LINK}"
+         target="_blank"
+         rel="sponsored noopener">
+         JungleScout
+      </a>
+    </p>
+
+    <p>
+      JungleScout helps you find winning products, analyze demand,
+      and scale your Amazon store faster.
+    </p>
+  `;
+}
+
+/* =========================
+   GENERATE 1000 FAQs
+========================= */
+
 for (let i = 0; i < 1000; i++) {
 
-  const cat = categories[i % categories.length];
+  const cat =
+    categories[i % categories.length];
 
-  const question = `What should I know about ${cat} (FAQ ${i+1})?`;
+  const question =
+    `What should I know about ${cat}?`;
 
-  const answer = `
-    This question relates to ${cat}. 
-    In Amazon FBA, understanding ${cat} is critical for success.
-    
-    Recommended tool:
-    <a href="https://get.junglescout.com/wloofjbvk5mp" target="_blank" rel="nofollow">
-      Jungle Scout
-    </a>
-  `;
+  const div =
+    document.createElement("div");
 
-  const div = document.createElement("div");
   div.className = "faq-item";
 
   div.innerHTML = `
-    <div class="faq-q">Q${i+1}: ${question}</div>
-    <div class="faq-a">${answer}</div>
+    <div class="faq-q">
+      Q${i + 1}: ${question}
+    </div>
+
+    <div class="faq-a">
+      ${generateAnswer(cat)}
+    </div>
   `;
 
   faqContainer.appendChild(div);
-
-  faqCount++;
 }
 
-// Accordion behavior
-document.addEventListener("click", function(e) {
+/* =========================
+   ACCORDION
+========================= */
+
+document.addEventListener("click", function (e) {
   if (e.target.classList.contains("faq-q")) {
-    const answer = e.target.nextElementSibling;
-    answer.style.display = answer.style.display === "block" ? "none" : "block";
+
+    const answer =
+      e.target.nextElementSibling;
+
+    answer.style.display =
+      answer.style.display === "block"
+        ? "none"
+        : "block";
   }
 });
+
 </script>
 
-<!-- SEO FAQ Schema (important for Google) -->
+<!-- =========================
+     SEO FAQ SCHEMA
+========================= -->
+
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -142,7 +198,7 @@ document.addEventListener("click", function(e) {
       "name": "Is Jungle Scout worth it?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Jungle Scout is widely used for product research and is recommended for beginners and professionals."
+        "text": "Jungle Scout is widely used for Amazon product research and is recommended for beginners and advanced sellers."
       }
     }
   ]
