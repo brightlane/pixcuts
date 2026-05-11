@@ -1,7 +1,20 @@
 const Twitter = require('twitter');
 const axios = require('axios');
 
-// Twitter credentials
+/* =========================
+   CONFIG (AFFILIATE LOCK)
+========================= */
+
+const AFFILIATE_LINK =
+  "https://get.junglescout.com/wloofjbvk5mp";
+
+const HASHTAGS =
+  "#AmazonFBA #ProductResearch #JungleScout #Ecommerce";
+
+/* =========================
+   TWITTER CLIENT
+========================= */
+
 const twitterClient = new Twitter({
   consumer_key: 'YOUR_TWITTER_API_KEY',
   consumer_secret: 'YOUR_TWITTER_API_SECRET',
@@ -9,56 +22,114 @@ const twitterClient = new Twitter({
   access_token_secret: 'YOUR_TWITTER_ACCESS_TOKEN_SECRET'
 });
 
-// Facebook credentials
-const facebookPageToken = 'YOUR_FACEBOOK_PAGE_ACCESS_TOKEN';
-const facebookPageId = 'YOUR_FACEBOOK_PAGE_ID'; // e.g., 'your_page_id'
+/* =========================
+   FACEBOOK CONFIG
+========================= */
 
-// Function to post to Twitter
+const facebookPageToken =
+  'YOUR_FACEBOOK_PAGE_ACCESS_TOKEN';
+
+const facebookPageId =
+  'YOUR_FACEBOOK_PAGE_ID';
+
+/* =========================
+   TWITTER POST
+========================= */
+
 async function postToTwitter(content) {
+
   try {
-    await twitterClient.post('statuses/update', { status: content });
-    console.log('Posted to Twitter:', content);
+    await twitterClient.post(
+      'statuses/update',
+      { status: content }
+    );
+
+    console.log('✅ Posted to Twitter');
+
   } catch (error) {
-    console.error('Error posting to Twitter:', error);
+    console.error('❌ Twitter error:', error.message);
   }
 }
 
-// Function to post to Facebook
+/* =========================
+   FACEBOOK POST
+========================= */
+
 async function postToFacebook(content) {
+
   try {
-    const url = `https://graph.facebook.com/${facebookPageId}/feed?message=${encodeURIComponent(content)}&access_token=${facebookPageToken}`;
-    const response = await axios.post(url);
-    console.log('Posted to Facebook:', content);
+    const url =
+      `https://graph.facebook.com/${facebookPageId}/feed`;
+
+    await axios.post(url, null, {
+      params: {
+        message: content,
+        access_token: facebookPageToken
+      }
+    });
+
+    console.log('✅ Posted to Facebook');
+
   } catch (error) {
-    console.error('Error posting to Facebook:', error);
+    console.error('❌ Facebook error:', error.message);
   }
 }
 
-// Function to generate social media post
+/* =========================
+   SMART POST GENERATOR
+========================= */
+
 async function generateSocialMediaPost(blogUrl) {
-  const postContent = `
-  Check out our latest blog post: ${blogUrl}!
 
-  💡 Learn more about the JungleScout tool and how it can help you succeed in Amazon FBA product research.
+  if (!blogUrl) {
+    throw new Error("Blog URL is required");
+  }
 
-  🌟 Explore: https://get.junglescout.com/wloofjbvk5mp
+  return `
+🚀 New Amazon FBA Guide Published!
 
-  #AmazonFBA #ProductResearch #JungleScout #AffiliateMarketing
-  `;
-  return postContent;
+Discover proven strategies for finding winning products and scaling your store.
+
+📘 Read here:
+${blogUrl}
+
+🔥 Recommended Tool:
+${AFFILIATE_LINK}
+
+${HASHTAGS}
+  `.trim();
 }
 
-// Main function to generate and post to Twitter and Facebook
+/* =========================
+   MAIN CONTROLLER
+========================= */
+
 async function postToSocialMedia(blogUrl) {
-  const content = await generateSocialMediaPost(blogUrl);
 
-  // Post to Twitter
-  await postToTwitter(content);
+  try {
 
-  // Post to Facebook
-  await postToFacebook(content);
+    const content =
+      await generateSocialMediaPost(blogUrl);
+
+    // Post everywhere
+    await postToTwitter(content);
+    await postToFacebook(content);
+
+    console.log("🎯 Social media posting complete");
+
+  } catch (error) {
+    console.error(
+      "❌ Social media error:",
+      error.message
+    );
+  }
 }
 
-// Example usage: posting a blog URL to social media
-const blogUrl = 'https://brightlane.github.io/Junglescout.com/blog/latest-article'; // replace with dynamic blog URL
+/* =========================
+   EXAMPLE USAGE
+========================= */
+
+const blogUrl =
+  'https://brightlane.github.io/Junglescout.com/blog/latest-article';
+
 postToSocialMedia(blogUrl);
