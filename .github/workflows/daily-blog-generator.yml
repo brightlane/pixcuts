@@ -1,0 +1,170 @@
+name: Daily Blog Generator
+
+on:
+  schedule:
+    # Runs every day at 9:00 AM UTC
+    - cron: "0 9 * * *"
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate-blog:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Generate Daily Blog Content
+        run: |
+          node <<'EOF'
+
+          const fs = require("fs");
+
+          const affiliateLink = "https://get.junglescout.com/wloofjbvk5mp";
+          const reviewLink = "https://brightlane.github.io/Junglescout.com/#review";
+
+          const topics = [
+            "Best Amazon FBA Niches",
+            "How to Find Winning Products",
+            "Amazon Keyword Research",
+            "Scaling an FBA Brand",
+            "Private Label Strategies",
+            "Low Competition Amazon Products",
+            "How Beginners Start Amazon FBA",
+            "Amazon Listing Optimization",
+            "Amazon Product Validation",
+            "FBA Profit Margin Strategies"
+          ];
+
+          function randomTopic() {
+            return topics[Math.floor(Math.random() * topics.length)];
+          }
+
+          const topic = randomTopic();
+          const date = new Date().toDateString();
+
+          const article = `
+          <div class="daily-post">
+
+            <h2>${topic} - ${date}</h2>
+
+            <p>
+            Amazon FBA sellers who rely on real marketplace data consistently
+            outperform sellers who rely on guesswork.
+            </p>
+
+            <p>
+            JungleScout helps ecommerce entrepreneurs discover profitable
+            products, estimate demand, analyze competition, and track keyword trends.
+            </p>
+
+            <h3>Why Product Research Matters</h3>
+
+            <p>
+            Most failed Amazon launches happen because sellers enter saturated
+            markets without validating demand first.
+            </p>
+
+            <p>
+            Successful sellers use tools like JungleScout to:
+            </p>
+
+            <ul>
+              <li>Estimate monthly revenue</li>
+              <li>Analyze competition levels</li>
+              <li>Discover low-competition opportunities</li>
+              <li>Track keyword demand</li>
+              <li>Improve product launch decisions</li>
+            </ul>
+
+            <h3>Scaling Faster</h3>
+
+            <p>
+            Once a profitable product is identified, sellers can scale through:
+            </p>
+
+            <ul>
+              <li>Product variations</li>
+              <li>Bundles</li>
+              <li>Keyword optimization</li>
+              <li>Listing improvements</li>
+              <li>Supplier optimization</li>
+            </ul>
+
+            <p>
+            JungleScout simplifies this process by giving sellers access to
+            actionable Amazon marketplace data.
+            </p>
+
+            <a href="${affiliateLink}"
+               target="_blank"
+               rel="noopener sponsored"
+               class="affiliate">
+               🚀 Try JungleScout
+            </a>
+
+            <br><br>
+
+            <a href="${reviewLink}"
+               target="_blank"
+               rel="noopener">
+               Read Full JungleScout Review →
+            </a>
+
+            <hr style="margin:50px 0;border-color:#1f2937;">
+
+          </div>
+          `;
+
+          const file = "blog.html";
+
+          let html = fs.readFileSync(file, "utf8");
+
+          const marker = '<div id="daily-auto-posts"></div>';
+
+          if (!html.includes(marker)) {
+            html = html.replace(
+              "</body>",
+              `
+              <div id="daily-auto-posts"></div>
+              </body>
+              `
+            );
+          }
+
+          html = html.replace(
+            '<div id="daily-auto-posts"></div>',
+            `
+            <div id="daily-auto-posts">
+              ${article}
+            </div>
+            `
+          );
+
+          fs.writeFileSync(file, html);
+
+          console.log("Daily blog content generated.");
+
+          EOF
+
+      - name: Commit Changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+          git add blog.html
+
+          git diff --cached --quiet || git commit -m "Auto-generate daily JungleScout blog"
+
+      - name: Push Changes
+        run: |
+          git push
