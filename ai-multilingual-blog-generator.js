@@ -5,17 +5,38 @@ import path from 'path';
 import { google } from 'googleapis';
 import dotenv from 'dotenv';
 
-// Load environment variables from .env file
 dotenv.config();
 
-// Initialize OpenAI and Google Translate
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-const translate = new Translate({ key: process.env.GOOGLE_API_KEY });
+/* =========================
+   CONFIG (LOCKED AFFILIATE)
+========================= */
 
-// Initialize Google Indexing API
+const AFFILIATE_ID = "wloofjbvk5mp";
+const AFFILIATE_LINK = `https://get.junglescout.com/${AFFILIATE_ID}`;
+
+const BRAND_NAME = "JungleScout";
+
+/* FIX for ES MODULES */
+const __dirname = path.resolve();
+
+/* =========================
+   INIT
+========================= */
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
+
+const translate = new Translate({
+  key: process.env.GOOGLE_API_KEY
+});
+
 const indexer = google.indexing('v3');
 
-// Google Indexing API setup
+/* =========================
+   GOOGLE INDEXING
+========================= */
+
 async function notifyGoogleOfNewContent(url) {
   const auth = new google.auth.GoogleAuth({
     scopes: ['https://www.googleapis.com/auth/indexing'],
@@ -24,88 +45,175 @@ async function notifyGoogleOfNewContent(url) {
   const authClient = await auth.getClient();
   google.options({ auth: authClient });
 
-  const res = await indexer.urlNotifications.publish({
+  await indexer.urlNotifications.publish({
     requestBody: {
-      url: url,
+      url,
       type: 'URL_UPDATED',
     },
   });
 
-  console.log('Google Indexing API notification sent for:', url);
+  console.log('Google Indexing API notified:', url);
 }
 
-// Generate Article
+/* =========================
+   AFFILIATE ENFORCER
+========================= */
+
+function enforceAffiliate(content) {
+
+  // Replace any fake/non-affiliate links
+  content = content.replace(
+    /https:\/\/(www\.)?junglescout\.com/gi,
+    AFFILIATE_LINK
+  );
+
+  // Guarantee presence
+  if (!content.includes(AFFILIATE_LINK)) {
+    content += `
+
+---
+
+## 🚀 Recommended Tool: JungleScout
+
+Amazon sellers use JungleScout to:
+- Find winning products
+- Analyze competition
+- Validate niches
+- Scale faster
+
+👉 ${AFFILIATE_LINK}
+`;
+  }
+
+  return content;
+}
+
+/* =========================
+   ARTICLE GENERATION
+========================= */
+
 async function generateArticle(keyword, language = 'en') {
+
   const prompt = `
-  Write a high-quality blog article in English. The topic is "${keyword}". It should include:
-  - Introduction
-  - Problem explanation
-  - Step-by-step guide
-  - Tools section (include JungleScout naturally)
-  - Mistakes to avoid
-  - Conclusion with actionable advice
-  
-  Include this link once: https://get.junglescout.com/wloofjbvk5mp
-  Make sure the content is SEO optimized, readable, and engaging.
-  `;
-  
+Write a high-quality SEO blog article about "${keyword}".
+
+Structure:
+- Introduction
+- Problem explanation
+- Step-by-step guide
+- Tools section (must include JungleScout)
+- Mistakes to avoid
+- Conclusion
+
+IMPORTANT:
+- Include JungleScout naturally as the main tool
+- Include this affiliate link ONCE:
+${AFFILIATE_LINK}
+`;
+
   const res = await openai.chat.completions.create({
-    model: 'gpt-4',
+    model: 'gpt-4o-mini',
     messages: [{ role: 'user', content: prompt }],
   });
 
   let articleContent = res.choices[0].message.content;
 
-  // Translate content into the desired language
+  // ENFORCE AFFILIATE BEFORE TRANSLATION
+  articleContent = enforceAffiliate(articleContent);
+
+  // Translate if needed
   if (language !== 'en') {
     const [translation] = await translate.translate(articleContent, language);
     articleContent = translation;
+
+    // RE-ENFORCE after translation (important!)
+    articleContent = enforceAffiliate(articleContent);
   }
 
   return articleContent;
 }
 
-// Save the article to a file
-async function saveArticle(title, content, language = 'en') {
-  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-  const dirPath = path.join(__dirname, 'posts', language);
-  const filePath = path.join(dirPath, `${slug}.html`);
+/* =========================
+   SAVE ARTICLE
+========================= */
 
-  // Ensure directory exists
+async function saveArticle(title, content, language = 'en') {
+
+  const slug =
+    title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+  const dirPath =
+    path.join(__dirname, 'posts', language);
+
+  const filePath =
+    path.join(dirPath, `${slug}.html`);
+
   if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath, { recursive: true });
   }
 
   const html = `
-    <!DOCTYPE html>
-    <html lang="${language}">
-    <head>
-      <title>${title}</title>
-      <meta name="description" content="${title}">
-      <meta name="keywords" content="${title}, JungleScout, Affiliate">
-    </head>
-    <body>
-      <article>
-        <h1>${title}</h1>
-        <div>${content.replace(/\n/g, '<br>')}</div>
-      </article>
-    </body>
-    </html>
-  `;
+<!DOCTYPE html>
+<html lang="${language}">
+<head>
+
+  <title>${title}</title>
+  <meta name="description" content="${title}">
+  <meta name="keywords" content="${title}, JungleScout, Amazon FBA">
+
+</head>
+
+<body style="font-family:Arial;max-width:800px;margin:auto;padding:20px;">
+
+  <article>
+    <h1>${title}</h1>
+
+    <div>
+      ${content.replace(/\n/g, '<br>')}
+    </div>
+
+    <hr>
+
+    <section style="margin-top:30px;padding:20px;background:#f3f3f3;border-radius:10px;">
+      <h2>🚀 Try JungleScout</h2>
+
+      <p>
+        JungleScout helps Amazon sellers discover profitable products,
+        validate demand, and scale ecommerce businesses.
+      </p>
+
+      <a href="${AFFILIATE_LINK}" target="_blank">
+        👉 Start with JungleScout
+      </a>
+
+    </section>
+
+  </article>
+
+</body>
+</html>
+`;
 
   fs.writeFileSync(filePath, html);
+
   console.log(`Article saved: ${filePath}`);
 
-  // Notify Google Indexing API
-  const articleUrl = `https://yourdomain.com/posts/${language}/${slug}.html`;
+  const articleUrl =
+    `https://yourdomain.com/posts/${language}/${slug}.html`;
+
   await notifyGoogleOfNewContent(articleUrl);
 
   return filePath;
 }
 
-// Main function for article generation
+/* =========================
+   GENERATOR LOOP
+========================= */
+
 async function runGenerator() {
-  const languages = ['en', 'es', 'fr', 'de', 'it']; // English, Spanish, French, German, Italian
+
+  const languages = ['en', 'es', 'fr', 'de', 'it'];
+
   const keywords = [
     "Best Amazon FBA tools for 2026",
     "How to find winning Amazon products",
@@ -114,16 +222,23 @@ async function runGenerator() {
     "How to scale your Amazon FBA business"
   ];
 
-  const keyword = keywords[Math.floor(Math.random() * keywords.length)];
-  const language = languages[Math.floor(Math.random() * languages.length)];
+  const keyword =
+    keywords[Math.floor(Math.random() * keywords.length)];
 
-  // Generate article in the selected language
-  const article = await generateArticle(keyword, language);
+  const language =
+    languages[Math.floor(Math.random() * languages.length)];
 
-  // Save article
-  const path = await saveArticle(keyword, article, language);
-  console.log(`Generated and saved article: ${path}`);
+  const article =
+    await generateArticle(keyword, language);
+
+  const file =
+    await saveArticle(keyword, article, language);
+
+  console.log("Generated and saved:", file);
 }
 
-// Schedule the generator to run every hour
-setInterval(runGenerator, 3600000); // 1 hour in milliseconds
+/* =========================
+   AUTO RUN
+========================= */
+
+setInterval(runGenerator, 3600000); // 1 hour
